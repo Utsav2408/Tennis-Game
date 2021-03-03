@@ -1,0 +1,204 @@
+<html>
+<head>
+	<title> TENNIS GAME </title>
+	<style type="text/css">
+		div.heading{
+			color:white;
+			font-size: 30px;
+			padding-top: 10px;
+			font-family: Comic Sans MS;
+		}
+		div.max_score{
+			color:white;
+			font-size: 20px;
+			font-family: Comic Sans MS;
+		}
+		div.player1{
+			float: left;
+			color:white;
+			font-size: 20px;
+			font-family: Comic Sans MS;
+		}
+		div.player2{
+			float :right;
+			color:white;
+			font-size: 20px;
+			font-family: Comic Sans MS;
+			padding-right: 700px;
+		}
+	</style>
+</head>
+<body style="background-image: url('https://bs-uploads.toptal.io/blackfish-uploads/blog/article/content/cover_image_file/cover_image/13656/cover-0223_02_Building-a-simple-game_Dan_thumbnail-59724680c12db14484866777cae62624-f60a23ecce7acc6f9bfed579d9a84b50.png');background-repeat: no-repeat;background-size: cover;">
+<div class="heading">
+	<h1><u> TENNIS GAME </u></h1></div>
+<div class="max_score">
+	<h2> MAX SCORE=7 </h2></div>
+<div class="player1">
+	<h3><u> PLAYER 1(PERSONAL)</u></h3></div> 
+<div class="player2"> 
+	<h3><u>PLAYER 2(COMPUTER) </u></h3></div>
+
+<canvas id="Tennis_Game" width="800" height="600"></canvas>
+<script>
+var canvas;
+var canvasContext;
+var ballX=30;
+var ballY=30;
+var ballSpeedX=10;
+var ballSpeedY=10;
+var paddle1Y=250;
+var paddle2Y=250;
+const PADDLE_HEIGHT=150;
+
+var showingWinScreen=false;
+
+var player1=0;
+var player2=0;
+const WINNING_SCORE = 7;
+
+function calculateMousePosition(evt){
+	var rect=canvas.getBoundingClientRect();//area of that black Rectangle
+	var root=document.documentElement;//html page document
+	var mouseX=evt.clientX-rect.left-root.scrollLeft;
+	var mouseY=evt.clientY-rect.top-root.scrollTop;
+	return{
+		x:mouseX,
+		y:mouseY
+	};
+}
+
+function handleMouseClick(evt){
+	if(showingWinScreen){
+		player1=0;
+		player2=0;
+		showingWinScreen=false;
+	}
+}
+
+window.onload=function(){
+	canvas=document.getElementById('Tennis_Game');
+	canvasContext=canvas.getContext('2d');
+	
+	var framePerSecond=30;
+	setInterval(function(){
+		moveEverything();
+		drawEverything();	
+		},1000/framePerSecond);
+
+	canvas.addEventListener('mousedown',handleMouseClick);
+
+	canvas.addEventListener('mousemove',function(evt){
+				var mousePos=calculateMousePosition(evt);
+				paddle1Y=mousePos.y-(PADDLE_HEIGHT/2);
+			});
+	
+}
+
+function ballReset(){
+	if(player1>=WINNING_SCORE || player2>=WINNING_SCORE){
+		showingWinScreen=true;
+	}
+	ballSpeedX=-ballSpeedX;
+	ballX=canvas.width/2;
+	ballY=canvas.height/2;
+}
+
+function computerMovement(){
+	var paddle2YCenter=paddle2Y+(PADDLE_HEIGHT/2);
+	if(paddle2YCenter < ballY-35){
+		paddle2Y+=8;
+	}
+	else if(paddle2YCenter > ballY+35){
+		paddle2Y-=8;
+	}
+}
+
+function moveEverything(){
+	if(showingWinScreen){
+		return;
+	}
+	computerMovement();
+	ballX = ballX + ballSpeedX;
+	ballY=ballY+ballSpeedY;
+	if(ballX>canvas.width){
+		if(ballY> paddle2Y &&
+			ballY<paddle2Y+PADDLE_HEIGHT){
+				ballSpeedX=-ballSpeedX;
+				var deltaY=ballY-(paddle2Y+(PADDLE_HEIGHT/2));
+				ballSpeedY = deltaY*0.35;
+		} 
+		else{
+			player1++;
+			ballReset();
+			
+		}
+	}
+	if(ballX<0){
+		if(ballY> paddle1Y &&
+			ballY<paddle1Y+PADDLE_HEIGHT){
+				ballSpeedX=-ballSpeedX;
+				var deltaY=ballY-(paddle1Y+(PADDLE_HEIGHT/2));
+				ballSpeedY = deltaY*0.35;
+		} 
+		else{
+			player2++;
+			ballReset();
+			
+		}
+	}	 
+	if(ballY>canvas.height){
+		ballSpeedY=-ballSpeedY;	
+	}
+	if(ballY<0){
+		ballSpeedY=-ballSpeedY;	
+	}	 
+
+}
+
+
+function drawNet(){
+	for(var i=0;i<canvas.height;i+=40){
+		colorRect(canvas.width/2-1,i,2,20,'white');		
+	}
+}
+function drawEverything(){	
+	colorRect(0,0,canvas.width,canvas.height,'black');
+	
+	if(showingWinScreen){
+		canvasContext.fillStyle='white';
+		/*if(player1==player2){
+			canvasContext.fillText("LETS PLAY",canvas.width/2,canvas.height/2);
+			showingWinScreen=false;
+			break;
+		}*/
+		if(player1>=WINNING_SCORE){
+			canvasContext.fillText("Player 1 won ..click to continue",350,500);}
+		else if(player2>=WINNING_SCORE){
+			canvasContext.fillText("Player 2 won ..click to continue",350,500);
+		}
+		return;
+	}
+	
+	drawNet();
+	colorRect(0,paddle1Y,10,PADDLE_HEIGHT,'white');
+	colorRect(canvas.width-10,paddle2Y,10,PADDLE_HEIGHT,'white');
+	colorCircle(ballX,ballY,10,'white');
+	canvasContext.fillText(player1,100,100,100);
+	canvasContext.fillText(player2,700,100,100);
+}
+
+function colorCircle(centerX,centerY,radius,drawColor){
+	canvasContext.fillStyle=drawColor;
+	canvasContext.beginPath();
+	canvasContext.arc(centerX,centerY,radius,0,Math.PI*2,true);
+	canvasContext.fill();
+
+}
+
+function colorRect(leftX,topY,width,height,drawColor){
+	canvasContext.fillStyle=drawColor;
+	canvasContext.fillRect(leftX,topY,width,height);
+}	
+</script>
+</body>
+</html>
